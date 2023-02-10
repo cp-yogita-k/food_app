@@ -51,7 +51,7 @@ class _loginState extends State<login> {
                 children: [
                   InkWell(onTap: () {
                     Navigator.push(context, MaterialPageRoute(builder: (context) {
-                      return food();
+                      return Food();
                     },));
                   },
                     child: Container(

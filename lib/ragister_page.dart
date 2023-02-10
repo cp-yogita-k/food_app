@@ -74,7 +74,7 @@ class _ragisterState extends State<ragister> {
                 onTap: () {
                   Navigator.push(context, MaterialPageRoute(
                     builder: (context) {
-                      return food();
+                      return Food();
                     },
                   ));
                 },

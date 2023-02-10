@@ -3,24 +3,24 @@ import 'package:navi2_0/detailpage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+
 class Details {
-  var image_link;
-  var name;
-  var price;
-  var id;
+  String? image_link;
+  String name;
+  int price;
+  int id;
 
   Details(this.image_link, this.name, this.price, this.id);
-
 }
 
-class food extends StatefulWidget {
-  const food({Key? key}) : super(key: key);
+class Food extends StatefulWidget {
+  const Food({Key? key}) : super(key: key);
 
   @override
-  State<food> createState() => _foodState();
+  State<Food> createState() => _FoodState();
 }
 
-class _foodState extends State<food> {
+class _FoodState extends State<Food> {
   List photos = [];
 
   @override
@@ -29,6 +29,7 @@ class _foodState extends State<food> {
     super.initState();
     getData();
   }
+
 
   Future<void> getData() async {
     final http.Response response = await http.get(
@@ -39,85 +40,95 @@ class _foodState extends State<food> {
       },
     );
     final data = json.decode(response.body);
-
+    if (data == null) {
+      const Image(image: AssetImage("images/loading.gif"));
+    }
     setState(() {
       photos = data;
     });
-    // if(response.statusCode == 200)
-    //   {
-    //     final List result = json.decode(response.body);
-    //     return result.map((e) => Details.fromJson(e)).toList();
-    //   }
-    // else
-    //   {
-    //     throw Exception('Failed to load data');
-    //   }
+  }
 
-    // String data = response.body;
-    // var productPic = jsonDecode(data)[0]["image_link"];
-    // var name = jsonDecode(data)[0]["name"];
-    // var price = jsonDecode(data)[0]["price"];
-    // var id = jsonDecode(data)[0]["id"];
+  Future<void> deleteAlbum(String id) async {
+    final http.Response response = await http.delete(
+      Uri.parse('makeup.p.rapidapi.com/products.json/$id'),
+      headers: <String, String>{
+        'X-RapidAPI-Key': 'd08ffcecdemsh7a46dfee14dfaecp17a74cjsn1953ce33fae0',
+        'X-RapidAPI-Host': 'makeup.p.rapidapi.com'
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-          title: Center(child: Text("Food details")),
+          title: const Center(child: Text("product details")),
           backgroundColor: Colors.orange.shade500),
-      body: Container(
-          color: Colors.orange.shade500,
-          child: ListView.builder(
-            itemCount: photos.length,
-            itemBuilder: (context, index) {
-              return Padding(
-                padding: const EdgeInsets.all(5),
-                child: Card(
-                  elevation: 30,
-                  shadowColor: Colors.black,
-                  color: Colors.yellow.shade700,
-                  child: ListTile(
-                    leading: Image.network(photos[index]["image_link"],width: 70,height: 300,
-                    fit: BoxFit.fill),
-                    title: Text("${photos[index]["name"]}",style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25)),
-                    subtitle: Container(
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start,children: [
-                        Text("price :${photos[index]["price"]}",style: TextStyle(fontSize: 20)),
-                        Text("id number:${photos[index]["id"]}",style: TextStyle(fontSize: 20),)
-                      ]),
-                      height: 120,
-                    ),
-                    trailing: Padding(
-                      padding: const EdgeInsets.all(7),
-                      child: Wrap(
-                        children: [
-                          IconButton(
-                              onPressed: () {
-                                Navigator.push(context, MaterialPageRoute(
-                                  builder: (context) {
-                                    return detail();
-                                  },
-                                ));
+      body: RefreshIndicator(onRefresh:getData,
+        child: Container(
+            color: Colors.orange.shade500,
+            child: ListView.builder(
+              itemCount: photos.length,
+              itemBuilder: (context, index) {
+                return Dismissible(key: UniqueKey(),
+                    direction: DismissDirection.endToStart,
+                    onDismissed: (direction) {
+                      setState(() {
+                        photos.removeAt(index);
+                      });
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(5),
+                      child: Card(
+                        elevation: 30,
+                        shadowColor: Colors.black,
+                        color: Colors.yellow.shade700,
+                        child: ListTile(
+                          onTap: () {
+                            Navigator.push(context, MaterialPageRoute(
+                              builder: (context) {
+                                return detail(photos, index);
                               },
-                              icon: Icon(
-                                Icons.arrow_circle_right_outlined,
-                                size: 58,
-                              )),
-                          IconButton(
-                              onPressed: () {},
-                              icon: Icon(
-                                Icons.delete,
-                                size: 60,
-                              ))
-                        ],
+                            ));
+                          },
+                          leading: Image.network(photos[index]["image_link"],
+                              errorBuilder: (context, error, stackTrace) {
+                                return Image.asset("images/loading.gif");
+                              },
+                              width: 70, height: 300, fit: BoxFit.fill),
+                          title: Text("${photos[index]["name"]}",
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 25,
+                                  overflow: TextOverflow.ellipsis)),
+                          subtitle: Container(
+                            height: 70,
+                            child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text("price :${photos[index]["price"]}",
+                                      style: const TextStyle(fontSize: 20)),
+                                  Text(
+                                    "id number:${photos[index]["id"]}",
+                                    style: const TextStyle(fontSize: 20),
+                                  )
+                                ]),
+                          ),
+                          // trailing: Padding(
+                          //   padding: const EdgeInsets.all(10.0),
+                          //   child: IconButton(
+                          //       onPressed: () {},
+                          //       icon: const Icon(
+                          //         Icons.delete,
+                          //         size: 60,
+                          //       )),
+                          // ),
+                        ),
                       ),
-                    ),
-                  ),
-                ),
-              );
-            },
-          )),
+                    ));
+              },
+            )),
+      ),
     );
   }
 }
